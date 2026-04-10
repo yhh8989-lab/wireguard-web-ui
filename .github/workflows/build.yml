@@ -55,13 +55,13 @@ jobs:
         retention-days: 30
         
     - name: Create Release
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      if: github.event_name == 'workflow_dispatch'
       id: create_release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v${{ github.run_number }}
-        name: Release v${{ github.run_number }}
-        body: 'Auto-generated release from build'
+        tag_name: v1.0.1
+        name: Release v1.0.1
+        body: 'Auto-generated release from build - Linux binary'
         draft: false
         files: |
           wireguard-ui-linux-amd64
