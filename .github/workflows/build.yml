@@ -54,16 +54,3 @@ jobs:
         path: wireguard-ui-linux-amd64
         retention-days: 30
         
-    - name: Create Release
-      if: github.event_name == 'workflow_dispatch'
-      id: create_release
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: v1.0.1
-        name: Release v1.0.1
-        body: 'Auto-generated release from build - Linux binary'
-        draft: false
-        files: |
-          wireguard-ui-linux-amd64
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
