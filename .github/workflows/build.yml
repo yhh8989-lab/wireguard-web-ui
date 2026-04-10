@@ -26,10 +26,23 @@ jobs:
       with:
         node-version: '20'
         
+    - name: Install Node dependencies
+      run: npm install --production
+        
     - name: Prepare assets
       run: |
-        chmod +x ./prepare_assets.sh
-        ./prepare_assets.sh
+        mkdir -p assets/dist/js assets/dist/css assets/plugins
+        cp node_modules/admin-lte/dist/js/adminlte.min.js assets/dist/js/
+        cp node_modules/admin-lte/dist/css/adminlte.min.css assets/dist/css/
+        cp -r custom assets/
+        cp -r node_modules/admin-lte/plugins/jquery assets/plugins/
+        cp -r node_modules/admin-lte/plugins/fontawesome-free assets/plugins/
+        cp -r node_modules/admin-lte/plugins/bootstrap assets/plugins/
+        cp -r node_modules/admin-lte/plugins/icheck-bootstrap assets/plugins/
+        cp -r node_modules/admin-lte/plugins/toastr assets/plugins/
+        cp -r node_modules/admin-lte/plugins/jquery-validation assets/plugins/
+        cp -r node_modules/admin-lte/plugins/select2 assets/plugins/
+        cp -r node_modules/jquery-tags-input assets/plugins/
         
     - name: Build
       run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o wireguard-ui-linux-amd64 .
