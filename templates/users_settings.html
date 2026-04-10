@@ -1,0 +1,364 @@
+{{define "title"}}
+<span data-i18n="users.title">Users Settings</span>
+{{end}}
+
+{{define "top_css"}}
+{{end}}
+
+{{define "username"}}
+{{ .username }}
+{{end}}
+
+{{define "page_title"}}
+<span data-i18n="users.title">Users Settings</span>
+{{end}}
+
+{{define "page_content"}}
+<section class="content">
+    <div class="container-fluid">
+        <div class="row" id="users-list">
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="modal_edit_user">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" data-i18n="users.edit_user">Edit User</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form name="frm_edit_user" id="frm_edit_user">
+                <div class="modal-body">
+                    <div class="form-group" style="display:none">
+                        <input type="text" style="display:none" class="form-control" id="_previous_user_name"
+                               name="_previous_user_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="_user_name" class="control-label" data-i18n="users.name">Name</label>
+                        <input type="text" class="form-control" id="_user_name" name="_user_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="_user_password" class="control-label" data-i18n="users.password">Password</label>
+                        <input type="password" class="form-control" id="_user_password" name="_user_password" value=""
+                               data-i18n-placeholder="users.password_hint" placeholder="Leave empty to keep the password unchanged">
+                    </div>
+                    <div class="form-group">
+                        <div class="icheck-primary d-inline">
+                            <input type="checkbox" id="_admin">
+                            <label for="_admin" data-i18n="users.admin">
+                                Admin
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="btn.cancel">Cancel</button>
+                    <button type="submit" class="btn btn-success" data-i18n="btn.save">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- /.modal -->
+
+<div class="modal fade" id="modal_remove_user">
+    <div class="modal-dialog">
+        <div class="modal-content bg-danger">
+            <div class="modal-header">
+                <h4 class="modal-title" data-i18n="users.remove_title">Remove</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-dark" data-dismiss="modal" data-i18n="btn.cancel">Cancel</button>
+                <button type="button" class="btn btn-outline-dark" id="remove_user_confirm" data-i18n="btn.apply">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /.modal -->
+
+<div class="modal fade" id="modal_batch_import_users">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" data-i18n="users.batch_import">Batch Import Users</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label data-i18n="users.batch_import_format">Import Format (JSON):</label>
+                    <textarea class="form-control" id="batch_import_json" rows="10" placeholder='[{"username":"user1","password":"pass1","admin":false},{"username":"user2","password":"pass2","admin":true}]'></textarea>
+                    <small class="text-muted" data-i18n="users.batch_import_hint">Enter one user per line: username, password, admin(true/false)</small>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="btn.cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="batch_import_confirm" data-i18n="btn.import">Import</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /.modal -->
+{{end}}
+
+{{define "bottom_js"}}
+<script>
+    function populateUsersList() {
+        $.ajax({
+            cache: false,
+            method: 'GET',
+            url: '{{.basePath}}/get-users',
+            dataType: 'json',
+            contentType: "application/json",
+            success: function (data) {
+                renderUserList(data);
+            },
+            error: function (jqXHR, exception) {
+                const responseJson = jQuery.parseJSON(jqXHR.responseText);
+                toastr.error(responseJson['message']);
+            }
+        });
+    }
+</script>
+<script>
+    // load user list
+    $(document).ready(function () {
+        populateUsersList();
+        let newUserHtml = '<div class="col-sm-2 offset-md-3" style="text-align: right;">' +
+            '<button style="" id="btn_new_user" type="button" class="btn btn-outline-primary btn-sm" ' +
+            'data-toggle="modal" data-target="#modal_edit_user" data-username="">' +
+            '<i class="nav-icon fas fa-plus"></i> ' + i18n.t('users.new_user') + '</button></div>';
+        let batchImportHtml = '<div class="col-sm-2" style="text-align: left;">' +
+            '<button style="" id="btn_batch_import" type="button" class="btn btn-outline-info btn-sm" ' +
+            'data-toggle="modal" data-target="#modal_batch_import_users">' +
+            '<i class="nav-icon fas fa-file-import"></i> ' + i18n.t('users.batch_import_btn') + '</button></div>';
+        $('h1').parents(".row").append(newUserHtml + batchImportHtml);
+    })
+
+    // modal_remove_user modal event
+    $("#modal_remove_user").on('show.bs.modal', function (event) {
+        const button = $(event.relatedTarget);
+        const user_name = button.data('username');
+        const modal = $(this);
+        modal.find('.modal-body').text(i18n.t('users.remove_confirm') + " " + user_name);
+        modal.find('#remove_user_confirm').val(user_name);
+    })
+
+    // remove_user_confirm button event
+    $(document).ready(function () {
+        $("#remove_user_confirm").click(function () {
+            const user_name = $(this).val();
+            const data = {"username": user_name};
+            $.ajax({
+                cache: false,
+                method: 'POST',
+                url: '{{.basePath}}/remove-user',
+                dataType: 'json',
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function (data) {
+                    $("#modal_remove_user").modal('hide');
+                    toastr.success(i18n.t('users.remove_success'));
+                    const divElement = document.getElementById('user_' + user_name);
+                    divElement.style.display = "none";
+                    location.reload()
+                },
+                error: function (jqXHR, exception) {
+                    const responseJson = jQuery.parseJSON(jqXHR.responseText);
+                    toastr.error(responseJson['message']);
+                }
+            });
+        });
+    });
+
+    // Edit user modal event
+    $(document).ready(function () {
+        $("#modal_edit_user").on('show.bs.modal', function (event) {
+            let modal = $(this);
+            const button = $(event.relatedTarget);
+            const user_name = button.data('username');
+
+            // update user modal data
+            if (user_name !== "") {
+                $.ajax({
+                    cache: false,
+                    method: 'GET',
+                    url: '{{.basePath}}/api/user/' + user_name,
+                    dataType: 'json',
+                    contentType: "application/json",
+                    success: function (resp) {
+                        const user = resp;
+
+                        modal.find(".modal-title").text(i18n.t('users.edit_user') + " " + user.username);
+                        modal.find("#_user_name").val(user.username);
+                        modal.find("#_previous_user_name").val(user.username);
+                        modal.find("#_user_password").val("");
+                        modal.find("#_user_password").prop("placeholder", i18n.t('users.password_hint'))
+                        modal.find("#_admin").prop("checked", user.admin);
+                    },
+                    error: function (jqXHR, exception) {
+                        const responseJson = jQuery.parseJSON(jqXHR.responseText);
+                        toastr.error(responseJson['message']);
+                    }
+                });
+            } else {
+                modal.find(".modal-title").text(i18n.t('users.add_user'));
+                modal.find("#_user_name").val("");
+                modal.find("#_previous_user_name").val("");
+                modal.find("#_user_password").val("");
+                modal.find("#_user_password").prop("placeholder", "")
+                modal.find("#_admin").prop("checked", false);
+            }
+        });
+    });
+
+    function updateUserInfo() {
+        const username = $("#_user_name").val();
+        const previous_username = $("#_previous_user_name").val();
+        const password = $("#_user_password").val();
+        let admin = false;
+        if ($("#_admin").is(':checked')) {
+            admin = true;
+        }
+        const data = {
+            "username": username,
+            "password": password,
+            "previous_username": previous_username,
+            "admin": admin
+        };
+
+        if (previous_username !== "") {
+            $.ajax({
+                cache: false,
+                method: 'POST',
+                url: '{{.basePath}}/update-user',
+                dataType: 'json',
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function (data) {
+                    toastr.success(i18n.t('users.update_success'));
+                    location.reload();
+                },
+                error: function (jqXHR, exception) {
+                    const responseJson = jQuery.parseJSON(jqXHR.responseText);
+                    toastr.error(responseJson['message']);
+                }
+            });
+        } else {
+            $.ajax({
+                cache: false,
+                method: 'POST',
+                url: '{{.basePath}}/create-user',
+                dataType: 'json',
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function (data) {
+                    toastr.success(i18n.t('users.create_success'));
+                    location.reload();
+                },
+                error: function (jqXHR, exception) {
+                    const responseJson = jQuery.parseJSON(jqXHR.responseText);
+                    toastr.error(responseJson['message']);
+                }
+            });
+
+        }
+    }
+
+    $(document).ready(function () {
+        $.validator.setDefaults({
+            submitHandler: function (form) {
+                updateUserInfo();
+            }
+        });
+        // Edit user form validation
+        $("#frm_edit_user").validate({
+            rules: {
+                _user_name: {
+                    required: true
+                },
+                _user_password: {
+                    required: function () {
+                        return $("#_previous_user_name").val() === "";
+                    }
+                },
+            },
+            messages: {
+                _user_name: {
+                    required: i18n.t('validation.enter_username')
+                },
+                _user_password: {
+                    required: i18n.t('validation.enter_password')
+                },
+            },
+            errorElement: 'span',
+            errorPlacement: function (error, element) {
+                error.addClass('invalid-feedback');
+                element.closest('.form-group').append(error);
+            },
+            highlight: function (element, errorClass, validClass) {
+                $(element).addClass('is-invalid');
+            },
+            unhighlight: function (element, errorClass, validClass) {
+                $(element).removeClass('is-invalid');
+            }
+        });
+        //
+    });
+
+    // Batch import users
+    $(document).ready(function () {
+        $("#batch_import_confirm").click(function () {
+            const jsonStr = $("#batch_import_json").val().trim();
+            if (!jsonStr) {
+                toastr.error(i18n.t('users.batch_import_error_empty'));
+                return;
+            }
+
+            let users;
+            try {
+                users = JSON.parse(jsonStr);
+            } catch (e) {
+                toastr.error(i18n.t('users.batch_import_error_format'));
+                return;
+            }
+
+            if (!Array.isArray(users) || users.length === 0) {
+                toastr.error(i18n.t('users.batch_import_error_format'));
+                return;
+            }
+
+            const data = {"users": users};
+
+            $.ajax({
+                cache: false,
+                method: 'POST',
+                url: '{{.basePath}}/batch-create-users',
+                dataType: 'json',
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function(resp) {
+                    $("#modal_batch_import_users").modal('hide');
+                    toastr.success(resp.message);
+                    $("#batch_import_json").val('');
+                    location.reload();
+                },
+                error: function(jqXHR, exception) {
+                    const responseJson = jQuery.parseJSON(jqXHR.responseText);
+                    toastr.error(responseJson['message']);
+                }
+            });
+        });
+    });
+</script>
+{{end}}

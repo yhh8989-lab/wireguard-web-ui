@@ -1,0 +1,129 @@
+{{ define "title"}}
+<span data-i18n="profile.title">Profile</span>
+{{ end }}
+
+{{ define "top_css"}}
+{{ end }}
+
+{{ define "username"}}
+{{ .username }}
+{{ end }}
+
+{{ define "page_title"}}
+<span data-i18n="profile.title">Profile</span>
+{{ end }}
+
+{{ define "page_content"}}
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card card-success">
+                    <div class="card-header">
+                        <h3 class="card-title" data-i18n="profile.update_info">Update user information</h3>
+                    </div>
+                    <form role="form" id="frm_profile" name="frm_profile">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="username" class="control-label" data-i18n="profile.username">Username</label>
+                                <input type="text" class="form-control" name="username" id="username"
+                                       value="">
+                            </div>
+                            <div class="form-group">
+                                <label for="password" class="control-label" data-i18n="profile.password">Password</label>
+                                <input type="password" class="form-control" name="password" id="password"
+                                       value="" data-i18n-placeholder="profile.password_hint" placeholder="Leave empty to keep the password unchanged">
+                            </div>
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-success" id="update" data-i18n="btn.update">Update</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{{ end }}
+
+{{ define "bottom_js"}}
+<script>
+    {
+        var previous_username;
+        var admin;
+    }
+    $(document).ready(function () {
+        $.ajax({
+            cache: false,
+            method: 'GET',
+            url: '{{.basePath}}/api/user/{{.baseData.CurrentUser}}',
+            dataType: 'json',
+            contentType: "application/json",
+            success: function (resp) {
+                const user = resp;
+                $("#username").val(user.username);
+                previous_username = user.username;
+                admin = user.admin;
+            },
+            error: function (jqXHR, exception) {
+                const responseJson = jQuery.parseJSON(jqXHR.responseText);
+                toastr.error(responseJson['message']);
+            }
+        });
+    });
+
+
+    function updateUserInfo() {
+        const username = $("#username").val();
+        const password = $("#password").val();
+        const data = {"username": username, "password": password, "previous_username": previous_username, "admin":admin};
+        $.ajax({
+            cache: false,
+            method: 'POST',
+            url: '{{.basePath}}/update-user',
+            dataType: 'json',
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function (data) {
+                toastr.success(i18n.t('profile.update_success'));
+                location.reload();
+            },
+            error: function (jqXHR, exception) {
+                const responseJson = jQuery.parseJSON(jqXHR.responseText);
+                toastr.error(responseJson['message']);
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        $.validator.setDefaults({
+            submitHandler: function () {
+                updateUserInfo();
+            }
+        });
+        $("#frm_profile").validate({
+            rules: {
+                username: {
+                    required: true
+                }
+            },
+            messages: {
+                username: {
+                    required: i18n.t('validation.enter_username'),
+                }
+            },
+            errorElement: 'span',
+            errorPlacement: function (error, element) {
+                error.addClass('invalid-feedback');
+                element.closest('.form-group').append(error);
+            },
+            highlight: function (element, errorClass, validClass) {
+                $(element).addClass('is-invalid');
+            },
+            unhighlight: function (element, errorClass, validClass) {
+                $(element).removeClass('is-invalid');
+            }
+        });
+    });
+</script>
+{{ end }}

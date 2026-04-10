@@ -1,0 +1,117 @@
+{{define "title"}}
+    <span data-i18n="wol.title">Wake On Lan Hosts</span>
+{{end}}
+
+{{define "top_css"}}
+{{end}}
+
+{{define "username"}}
+    {{ .username }}
+{{end}}
+
+{{define "page_title"}}
+    <span data-i18n="wol.title">Wake On Lan Hosts</span>
+{{end}}
+
+{{define "page_content"}}
+
+    <div class="modal fade" id="modal_wake_on_lan_host">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" data-i18n="wol.new_host">New Wake On Lan Host</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form name="frm_wake_on_lan_host" id="frm_wake_on_lan_host">
+                    <div class="modal-body">
+                        <input type="hidden" id="frm_wake_on_lan_host_old_mac_address" name="old_mac_address">
+                        <div class="form-group">
+                            <label for="frm_wake_on_lan_host_name" class="control-label" data-i18n="wol.name">Name</label>
+                            <input type="text" class="form-control" id="frm_wake_on_lan_host_name" name="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="frm_wake_on_lan_host_mac_address" class="control-label" data-i18n="wol.mac_address">Mac Address</label>
+                            <input type="text" class="form-control" id="frm_wake_on_lan_host_mac_address"
+                                   name="mac_address">
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="btn.cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="btn.submit">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal_remove_wake_on_lan_host">
+        <div class="modal-dialog">
+            <div class="modal-content bg-danger">
+                <div class="modal-header">
+                    <h4 class="modal-title" data-i18n="wol.remove_title">Remove</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-outline-dark" data-dismiss="modal" data-i18n="btn.cancel">Cancel</button>
+                    <button type="button" class="btn btn-outline-dark" id="remove_wake_on_host_confirm" data-i18n="btn.apply">Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            {{ if .error }}
+                <div class="alert alert-warning" role="alert">{{.error}}</div>
+            {{ end}}
+
+            <div class="row">
+                {{ range $idx, $host := .hosts }}
+                    {{- /*gotype: github.com/ngoduykhanh/wireguard-ui/model.WakeOnLanHost*/ -}}
+                    <div class="col-sm-4" id="{{ $host.ResolveResourceName }}">
+                        <div class="info-box">
+                            <div class="info-box-content">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-success btn-sm"
+                                            data-mac-address="{{ .MacAddress }}">Wake On
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-outline-primary btn-sm btn_modify_wake_on_lan_host"
+                                            data-toggle="modal" data-target="#modal_wake_on_lan_host"
+                                            data-name="{{ .Name }}" data-mac-address="{{ .MacAddress }}">Edit
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-toggle="modal"
+                                            data-target="#modal_remove_wake_on_lan_host"
+                                            data-mac-address="{{ .MacAddress }}">Remove
+                                    </button>
+                                </div>
+                                <hr>
+                                <span class="info-box-text"><i class="fas fa-address-card"></i> <span class="name">{{ .Name }}</span></span>
+                                <span class="info-box-text"><i class="fas fa-ethernet"></i> <span class="mac-address">{{ .MacAddress }}</span></span>
+                                <span class="info-box-text"><i class="fas fa-clock"></i>
+                                    <span class="latest-used">
+                                        {{ if .LatestUsed }}
+                                            {{ .LatestUsed.Format "2006-01-02T15:04:05Z07:00"}}
+                                        {{ else }}
+                                            <span data-i18n="wol.unused">Unused</span>
+                                        {{ end }}
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                {{ end }}
+            </div>
+        </div>
+    </section>
+
+{{end}}
+{{define "bottom_js"}}
+    <script src="{{.basePath}}/static/custom/js/wake_on_lan_hosts.js"></script>
+{{end}}
